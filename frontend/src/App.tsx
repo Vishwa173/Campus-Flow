@@ -10,10 +10,12 @@ import Dashboard from "./pages/Dashboard";
 import AuthCallback from "./auth/AuthCallback";
 import { isAuthenticated } from "./auth/auth";
 import Organizations from "./pages/Organizations";
+import OrganizationDetails from "./pages/OrganizationDetails";
+import CreateEvent from "./pages/CreateEvent";
+import EventDetails from "./pages/EventDetails";
+import EditEvent from "./pages/EditEvent";
 
-function ProtectedRoute({
-    children,
-}: {
+function ProtectedRoute({children,}: {
     children: React.ReactNode;
 }) {
     if (!isAuthenticated()) {
@@ -54,6 +56,42 @@ function App() {
                           <Organizations />
                       </ProtectedRoute>
                   }
+                />
+
+                <Route
+                    path="/organizations/:organizationId"
+                    element={
+                        <ProtectedRoute>
+                            <OrganizationDetails />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/organizations/:organizationId/events/create"
+                    element={
+                        <ProtectedRoute>
+                            <CreateEvent />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/organizations/:organizationId/events/:eventId"
+                    element={
+                        <ProtectedRoute>
+                            <EventDetails />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/organizations/:organizationId/events/:eventId/edit"
+                    element={
+                        <ProtectedRoute>
+                            <EditEvent />
+                        </ProtectedRoute>
+                    }
                 />
 
                 <Route

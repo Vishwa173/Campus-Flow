@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { createOrganization, getMyOrganizations } from "../api";
 
 type Organization = {
@@ -22,6 +23,7 @@ function Organizations() {
     const [description, setDescription] = useState("");
     const [creating, setCreating] = useState(false);
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     useEffect(() => {
         async function load() {
@@ -171,12 +173,7 @@ function Organizations() {
                                 <div className="mt-6 border-t border-zinc-100 pt-4">
                                     <button
                                         className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
-                                        onClick={() =>
-                                            console.log(
-                                                "Open organization",
-                                                organization.id
-                                            )
-                                        }
+                                        onClick={() => navigate(`/organizations/${organization.id}`)}
                                     >
                                         Open organization →
                                     </button>
