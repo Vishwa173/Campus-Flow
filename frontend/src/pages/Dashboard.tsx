@@ -124,7 +124,9 @@ function Dashboard() {
                 <section className="mb-10 grid gap-4 md:grid-cols-3">
 
                     {/* Discover */}
-                    <button className="group rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-[0_4px_20px_rgba(0,0,0,0.025)] transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md">
+                    <button 
+                         onClick={() => navigate("/events")}
+                        className="group rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-[0_4px_20px_rgba(0,0,0,0.025)] transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md">
                         <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
                             <svg
                                 className="h-5 w-5 text-indigo-600"
@@ -251,7 +253,9 @@ function Dashboard() {
                         interesting.
                     </p>
 
-                    <button className="mt-6 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]">
+                    <button 
+                         onClick={() => navigate("/events")}
+                        className="mt-6 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]">
                         Browse events
                     </button>
                 </section>

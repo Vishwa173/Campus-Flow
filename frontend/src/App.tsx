@@ -14,6 +14,7 @@ import OrganizationDetails from "./pages/OrganizationDetails";
 import CreateEvent from "./pages/CreateEvent";
 import EventDetails from "./pages/EventDetails";
 import EditEvent from "./pages/EditEvent";
+import EventDiscovery from "./pages/EventDiscovery";
 
 function ProtectedRoute({children,}: {
     children: React.ReactNode;
@@ -81,6 +82,15 @@ function App() {
                     element={
                         <ProtectedRoute>
                             <EventDetails />
+                        </ProtectedRoute>
+                    }
+                />
+
+                <Route
+                    path="/events"
+                    element={
+                        <ProtectedRoute>
+                            <EventDiscovery />
                         </ProtectedRoute>
                     }
                 />

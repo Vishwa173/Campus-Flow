@@ -189,3 +189,29 @@ export async function publishEvent(organizationId: number, eventId: number) {
 
     return response.json();
 }
+
+export async function searchEvents(query: string,categoryId?: number) {
+    const token = getToken();
+    const params = new URLSearchParams();
+
+    params.append("q", query);
+
+    if (categoryId !== undefined) {
+        params.append("categoryId", categoryId.toString());
+    }
+
+    const response = await fetch(
+        `${API_URL}/api/search/events?${params.toString()}`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error("Failed to search events");
+    }
+
+    return response.json();
+}
