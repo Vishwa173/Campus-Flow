@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { removeToken } from "../auth/auth";
-import { getCurrentUser } from "../api";
+import {
+    getCurrentUser,
+    getMyRegistrations,
+} from "../api";
 
 type User = {
     id: number;
@@ -10,10 +13,23 @@ type User = {
     profilePicture: string | null;
 };
 
+type Registration = {
+    id: number;
+    eventId: number;
+    organizationId: number;
+    eventTitle: string;
+    status: "REGISTERED" | "CANCELLED";
+    registeredAt: string;
+};
+
 function Dashboard() {
     const navigate = useNavigate();
 
     const [user, setUser] = useState<User | null>(null);
+
+    const [registrations, setRegistrations] = useState<Registration[]>([]);
+    const [registrationsLoading, setRegistrationsLoading] = useState(true);
+    const [registrationsError, setRegistrationsError] = useState("");
 
     useEffect(() => {
         getCurrentUser()
@@ -25,6 +41,21 @@ function Dashboard() {
                 navigate("/login", { replace: true });
             });
     }, [navigate]);
+
+    useEffect(() => {
+        getMyRegistrations()
+            .then((data) => {
+                setRegistrations(data);
+            })
+            .catch(() => {
+                setRegistrationsError(
+                    "Failed to load your registrations"
+                );
+            })
+            .finally(() => {
+                setRegistrationsLoading(false);
+            });
+    }, []);
 
     const handleLogout = () => {
         removeToken();
@@ -124,9 +155,10 @@ function Dashboard() {
                 <section className="mb-10 grid gap-4 md:grid-cols-3">
 
                     {/* Discover */}
-                    <button 
-                         onClick={() => navigate("/events")}
-                        className="group rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-[0_4px_20px_rgba(0,0,0,0.025)] transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md">
+                    <button
+                        onClick={() => navigate("/events")}
+                        className="group rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-[0_4px_20px_rgba(0,0,0,0.025)] transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
+                    >
                         <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50">
                             <svg
                                 className="h-5 w-5 text-indigo-600"
@@ -154,7 +186,16 @@ function Dashboard() {
                     </button>
 
                     {/* Registrations */}
-                    <button className="group rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-[0_4px_20px_rgba(0,0,0,0.025)] transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md">
+                    <button
+                        onClick={() =>
+                            document
+                                .getElementById("upcoming-events")
+                                ?.scrollIntoView({
+                                    behavior: "smooth",
+                                })
+                        }
+                        className="group rounded-2xl border border-zinc-200 bg-white p-6 text-left shadow-[0_4px_20px_rgba(0,0,0,0.025)] transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md"
+                    >
                         <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50">
                             <svg
                                 className="h-5 w-5 text-emerald-600"
@@ -183,7 +224,9 @@ function Dashboard() {
                         </p>
 
                         <span className="mt-5 inline-block text-sm font-medium text-emerald-600 transition group-hover:translate-x-1">
-                            View registrations →
+                            {registrations.length > 0
+                                ? `${registrations.length} registered →`
+                                : "View registrations →"}
                         </span>
                     </button>
 
@@ -221,44 +264,129 @@ function Dashboard() {
 
                 </section>
 
-                {/* Empty state */}
-                <section className="rounded-2xl border border-dashed border-zinc-300 bg-white/60 px-6 py-16 text-center">
+                {/* Upcoming registered events */}
+                <section
+                    id="upcoming-events"
+                    className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-[0_4px_20px_rgba(0,0,0,0.025)]"
+                >
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h2 className="text-lg font-semibold text-zinc-900">
+                                Your upcoming events
+                            </h2>
 
-                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100">
-                        <svg
-                            className="h-5 w-5 text-zinc-500"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                        >
-                            <path d="M8 2v4M16 2v4M3 10h18" />
-                            <rect
-                                x="3"
-                                y="4"
-                                width="18"
-                                height="17"
-                                rx="2"
-                            />
-                        </svg>
+                            <p className="mt-1 text-sm text-zinc-500">
+                                Events you've registered for.
+                            </p>
+                        </div>
+
+                        {registrations.length > 0 && (
+                            <button
+                                onClick={() => navigate("/events")}
+                                className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                            >
+                                Discover more →
+                            </button>
+                        )}
                     </div>
 
-                    <h2 className="mt-5 text-base font-semibold text-zinc-900">
-                        Your upcoming events
-                    </h2>
+                    {registrationsLoading ? (
+                        <div className="py-12 text-center">
+                            <p className="text-sm text-zinc-500">
+                                Loading your registrations...
+                            </p>
+                        </div>
+                    ) : registrationsError ? (
+                        <div className="mt-6 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+                            {registrationsError}
+                        </div>
+                    ) : registrations.length === 0 ? (
+                        <div className="mt-6 rounded-xl border border-dashed border-zinc-300 bg-zinc-50/50 px-6 py-12 text-center">
+                            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-zinc-100">
+                                <svg
+                                    className="h-5 w-5 text-zinc-500"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                >
+                                    <path d="M8 2v4M16 2v4M3 10h18" />
+                                    <rect
+                                        x="3"
+                                        y="4"
+                                        width="18"
+                                        height="17"
+                                        rx="2"
+                                    />
+                                </svg>
+                            </div>
 
-                    <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-500">
-                        You haven't registered for any events yet. Explore
-                        what's happening around campus and find something
-                        interesting.
-                    </p>
+                            <h3 className="mt-5 text-base font-semibold text-zinc-900">
+                                No registered events yet
+                            </h3>
 
-                    <button 
-                         onClick={() => navigate("/events")}
-                        className="mt-6 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]">
-                        Browse events
-                    </button>
+                            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-zinc-500">
+                                Explore what's happening around campus and
+                                register for an event that interests you.
+                            </p>
+
+                            <button
+                                onClick={() => navigate("/events")}
+                                className="mt-6 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 active:scale-[0.98]"
+                            >
+                                Browse events
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            {registrations.map((registration) => (
+                                <button
+                                    key={registration.id}
+                                    onClick={() =>
+                                        navigate(
+                                            `/organizations/${registration.organizationId}/events/${registration.eventId}`
+                                        )
+                                    }
+                                    className="group rounded-xl border border-zinc-200 bg-zinc-50 p-5 text-left transition hover:-translate-y-0.5 hover:border-zinc-300 hover:bg-white hover:shadow-sm"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
+                                            <svg
+                                                className="h-5 w-5 text-emerald-600"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="2"
+                                            >
+                                                <path d="M5 12.5 9 16l10-10" />
+                                            </svg>
+                                        </div>
+
+                                        <span className="text-xs font-medium text-emerald-600">
+                                            Registered
+                                        </span>
+                                    </div>
+
+                                    <h3 className="mt-4 font-semibold text-zinc-900 group-hover:text-indigo-600">
+                                        {registration.eventTitle}
+                                    </h3>
+
+                                    <p className="mt-2 text-xs text-zinc-500">
+                                        Registered on{" "}
+                                        {new Date(
+                                            registration.registeredAt
+                                        ).toLocaleDateString()}
+                                    </p>
+
+                                    <p className="mt-4 text-sm font-medium text-indigo-600">
+                                        View event →
+                                    </p>
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </section>
+
             </main>
         </div>
     );

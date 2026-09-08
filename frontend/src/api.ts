@@ -215,3 +215,100 @@ export async function searchEvents(query: string,categoryId?: number) {
 
     return response.json();
 }
+
+export async function registerForEvent(eventId: number) {
+    const token = getToken();
+
+    const response = await fetch(
+        `${API_URL}/api/events/${eventId}/register`,
+        {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Failed to register for event");
+    }
+
+    return response.json();
+}
+
+export async function cancelRegistration(eventId: number) {
+    const token = getToken();
+
+    const response = await fetch(
+        `${API_URL}/api/events/${eventId}/register`,
+        {
+            method: "DELETE",
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Failed to cancel registration");
+    }
+}
+
+export async function checkRegistration(eventId: number) {
+    const token = getToken();
+
+    const response = await fetch(
+        `${API_URL}/api/events/${eventId}/registration`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error("Failed to check registration");
+    }
+
+    return response.json();
+}
+
+export async function getMyRegistrations() {
+    const token = getToken();
+
+    const response = await fetch(
+        `${API_URL}/api/registrations/me`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch registrations");
+    }
+
+    return response.json();
+}
+
+export async function getRegistrationCount(eventId: number) {
+    const token = getToken();
+
+    const response = await fetch(
+        `${API_URL}/api/events/${eventId}/registration/count`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch registration count");
+    }
+
+    return response.json();
+}

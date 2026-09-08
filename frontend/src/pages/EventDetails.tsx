@@ -6,6 +6,10 @@ import {
     getEvent,
     getMyOrganizations,
     publishEvent,
+    checkRegistration,
+    registerForEvent,
+    cancelRegistration,
+    getRegistrationCount,
 } from "../api";
 
 import {
@@ -41,9 +45,16 @@ function EventDetails() {
 
     const [event, setEvent] = useState<Event | null>(null);
     const [role, setRole] = useState<OrganizationRole | null>(null);
+
     const [loading, setLoading] = useState(true);
     const [publishing, setPublishing] = useState(false);
     const [error, setError] = useState("");
+
+    const [isRegistered, setIsRegistered] = useState(false);
+    const [registering, setRegistering] = useState(false);
+    const [registrationError, setRegistrationError] = useState("");
+
+    const [registrationCount, setRegistrationCount] = useState(0);
 
     useEffect(() => {
         async function loadEvent() {
@@ -52,15 +63,24 @@ function EventDetails() {
                     throw new Error("Invalid event");
                 }
 
-                const [eventData, organizations] = await Promise.all([
+                const [
+                    eventData,
+                    organizations,
+                    registered,
+                    count,
+                ] = await Promise.all([
                     getEvent(
                         Number(organizationId),
                         Number(eventId)
                     ),
                     getMyOrganizations(),
+                    checkRegistration(Number(eventId)),
+                    getRegistrationCount(Number(eventId)),
                 ]);
 
                 setEvent(eventData);
+                setIsRegistered(registered);
+                setRegistrationCount(count);
 
                 const organization = organizations.find(
                     (org: {
@@ -109,6 +129,54 @@ function EventDetails() {
             );
         } finally {
             setPublishing(false);
+        }
+    }
+
+    async function handleRegister() {
+        if (!eventId) {
+            return;
+        }
+
+        setRegistering(true);
+        setRegistrationError("");
+
+        try {
+            await registerForEvent(Number(eventId));
+
+            setIsRegistered(true);
+            setRegistrationCount((count) => count + 1);
+        } catch (err) {
+            setRegistrationError(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to register for event"
+            );
+        } finally {
+            setRegistering(false);
+        }
+    }
+
+    async function handleCancelRegistration() {
+        if (!eventId) {
+            return;
+        }
+
+        setRegistering(true);
+        setRegistrationError("");
+
+        try {
+            await cancelRegistration(Number(eventId));
+
+            setIsRegistered(false);
+            setRegistrationCount((count) => Math.max(0, count - 1));
+        } catch (err) {
+            setRegistrationError(
+                err instanceof Error
+                    ? err.message
+                    : "Failed to cancel registration"
+            );
+        } finally {
+            setRegistering(false);
         }
     }
 
@@ -167,6 +235,13 @@ function EventDetails() {
         dateStyle: "medium",
         timeStyle: "short",
     });
+
+    const remainingSpots = Math.max(
+        event.capacity - registrationCount,
+        0
+    );
+
+    const isFull = registrationCount >= event.capacity;
 
     const statusStyles = {
         DRAFT: "bg-zinc-100 text-zinc-700",
@@ -283,10 +358,74 @@ function EventDetails() {
                                 </p>
 
                                 <p className="mt-2 text-sm font-semibold text-zinc-900">
-                                    {event.capacity} people
+                                    {registrationCount} /{" "}
+                                    {event.capacity} registered
+                                </p>
+
+                                <p className="mt-1 text-sm text-zinc-500">
+                                    {isFull
+                                        ? "Event is full"
+                                        : `${remainingSpots} spots remaining`}
                                 </p>
                             </div>
                         </div>
+
+                        {event.status === "PUBLISHED" && (
+                            <div className="mt-8 border-t border-zinc-200 pt-8">
+                                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                    <div>
+                                        <h2 className="text-lg font-semibold text-zinc-900">
+                                            Registration
+                                        </h2>
+
+                                        <p className="mt-1 text-sm text-zinc-500">
+                                            {isRegistered
+                                                ? "You are registered for this event."
+                                                : isFull
+                                                ? "This event is currently full."
+                                                : "Reserve your spot for this event."}
+                                        </p>
+                                    </div>
+
+                                    {isRegistered ? (
+                                        <button
+                                            onClick={
+                                                handleCancelRegistration
+                                            }
+                                            disabled={registering}
+                                            className="rounded-lg border border-red-300 px-5 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {registering
+                                                ? "Cancelling..."
+                                                : "Cancel registration"}
+                                        </button>
+                                    ) : isFull ? (
+                                        <button
+                                            disabled
+                                            className="rounded-lg bg-zinc-300 px-5 py-2.5 text-sm font-medium text-zinc-600"
+                                        >
+                                            Event full
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={handleRegister}
+                                            disabled={registering}
+                                            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            {registering
+                                                ? "Registering..."
+                                                : "Register for event"}
+                                        </button>
+                                    )}
+                                </div>
+
+                                {registrationError && (
+                                    <div className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+                                        {registrationError}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="mt-8 border-t border-zinc-200 pt-8">
                             <h2 className="text-lg font-semibold text-zinc-900">
